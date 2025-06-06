@@ -32,15 +32,15 @@ amp.el excels at managing multiple projects simultaneously:
 Add this to your Emacs configuration:
 
 ```elisp
-(straight-use-package 
-  '(amp :type git :host github :repo "shaneikenned/amp.el"))
+(straight-use-package
+  '(amp :type git :host github :repo "shaneikennedy/amp.el"))
 ```
 
 ### Manual Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/shaneikenned/amp.el.git
+   git clone https://github.com/shaneikennedy/amp.el.git
    ```
 
 2. Add to your Emacs `load-path`:

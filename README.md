@@ -24,6 +24,7 @@ amp.el excels at managing multiple projects simultaneously:
 
 - `amp--fix`: Send selected text with "fix this: " prefix
 - `amp--improve`: Send selected text with "improve this: " prefix
+- `amp--switch`: Switch between existing amp buffers
 
 ## Installation
 
@@ -63,6 +64,10 @@ Add this to your Emacs configuration:
 2. Run `M-x amp--fix` to send code with "fix this: " prefix
 3. Run `M-x amp--improve` to send code with "improve this: " prefix
 
+### Switching Between Sessions
+
+Run `M-x amp--switch` to quickly jump between amp buffers from different projects or sessions.
+
 ### Key Bindings (Optional)
 
 Add these to your configuration for quick access:
@@ -71,6 +76,7 @@ Add these to your configuration for quick access:
 (global-set-key (kbd "C-c a a") 'amp)
 (global-set-key (kbd "C-c a f") 'amp--fix)
 (global-set-key (kbd "C-c a i") 'amp--improve)
+(global-set-key (kbd "C-c a s") 'amp--switch)
 ```
 
 ## Requirements

@@ -220,6 +220,25 @@
     (message "No region selected")))
 
 ;;;###autoload
+(defun amp--switch ()
+  "Switch to an amp buffer."
+  (interactive)
+  (let ((amp-buffers (cl-remove-if-not
+                      (lambda (buf)
+                        (string-match "^\\*amp-.*\\*$" (buffer-name buf)))
+                      (buffer-list))))
+    (cond
+     ((null amp-buffers)
+      (message "No amp buffers found"))
+     ((= 1 (length amp-buffers))
+      (switch-to-buffer (car amp-buffers)))
+     (t
+      (let ((choice (completing-read "Choose amp buffer: "
+                                     (mapcar #'buffer-name amp-buffers)
+                                     nil t)))
+        (switch-to-buffer choice))))))
+
+;;;###autoload
 (defun amp ()
   "Start the amp CLI in the current project as a terminal buffer.
 If amp CLI is not installed, attempt to install it via npm."

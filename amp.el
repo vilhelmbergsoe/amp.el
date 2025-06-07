@@ -239,6 +239,38 @@
         (switch-to-buffer choice))))))
 
 ;;;###autoload
+(defun amp--kill ()
+  "Kill a selected amp process."
+  (interactive)
+  (let ((amp-buffers (amp--find-amp-buffers)))
+    (cond
+     ((null amp-buffers)
+      (message "No running amp processes found"))
+     ((= 1 (length amp-buffers))
+      (let ((buffer (car amp-buffers)))
+        (when (yes-or-no-p (format "Kill amp process in %s? " (buffer-name buffer)))
+          (condition-case err
+              (progn
+                (when (get-buffer-process buffer)
+                  (delete-process (get-buffer-process buffer)))
+                (kill-buffer buffer)
+                (message "Killed amp process: %s" (buffer-name buffer)))
+            (error (message "Failed to kill amp process: %s" (error-message-string err)))))))
+     (t
+      (let* ((choice (completing-read "Choose amp process to kill: "
+                                      (mapcar #'buffer-name amp-buffers)
+                                      nil t))
+             (buffer (get-buffer choice)))
+        (when (yes-or-no-p (format "Kill amp process in %s? " choice))
+          (condition-case err
+              (progn
+                (when (get-buffer-process buffer)
+                  (delete-process (get-buffer-process buffer)))
+                (kill-buffer buffer)
+                (message "Killed amp process: %s" choice))
+            (error (message "Failed to kill amp process: %s" (error-message-string err))))))))))
+
+;;;###autoload
 (defun amp ()
   "Start the amp CLI in the current project as a terminal buffer.
 If amp CLI is not installed, attempt to install it via npm."

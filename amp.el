@@ -155,19 +155,19 @@
    (buffer-list)))
 
 (defun amp--choose-amp-buffer ()
-  "Let user choose which amp buffer to use."
+  "Let user choose which amp buffer to use or create a new one."
   (let ((amp-buffers (amp--find-amp-buffers)))
     (cond
      ((null amp-buffers)
-      (message "No running amp processes found")
-      nil)
-     ((= 1 (length amp-buffers))
-      (car amp-buffers))
+      (when (yes-or-no-p "No running amp processes found. Start one for this project? ")
+        'create-new))
      (t
-      (let ((choice (completing-read "Choose amp process: "
-                                     (mapcar #'buffer-name amp-buffers)
-                                     nil t)))
-        (get-buffer choice))))))
+      (let* ((choices (append (mapcar #'buffer-name amp-buffers)
+                             '("Create new for this project")))
+             (choice (completing-read "Choose amp process: " choices nil t)))
+        (if (string= choice "Create new for this project")
+            'create-new
+          (get-buffer choice)))))))
 
 (defun amp--display-and-focus-buffer (buffer)
   "Display and focus BUFFER, positioning cursor at end."
@@ -184,36 +184,41 @@
 
 (defun amp--send-to-process (text)
   "Send TEXT to the amp process, starting it if necessary."
-  (let* ((current-buffer-name (amp--get-buffer-name))
+  (let* ((cleaned-text (string-trim-right text))
+         (current-buffer-name (amp--get-buffer-name))
          (buffer (get-buffer current-buffer-name)))
     ;; If current project has an amp buffer, use it
     (if (and buffer (term-check-proc buffer))
         (progn
           (with-current-buffer buffer
-          (term-send-string (get-buffer-process buffer) text)
+          (term-send-string (get-buffer-process buffer) cleaned-text)
           (term-send-string (get-buffer-process buffer) "\n"))
           (amp--display-and-focus-buffer buffer))
       ;; Otherwise, try to find any amp buffer or ask user to choose
       (let ((chosen-buffer (amp--choose-amp-buffer)))
-        (if chosen-buffer
-            (progn
-              (with-current-buffer chosen-buffer
-              (term-send-string (get-buffer-process chosen-buffer) text)
-              (term-send-string (get-buffer-process chosen-buffer) "\n"))
-              (amp--display-and-focus-buffer chosen-buffer))
-          ;; No running amp processes, start one for current project
+        (cond
+         ((bufferp chosen-buffer)
+          (with-current-buffer chosen-buffer
+            (term-send-string (get-buffer-process chosen-buffer) cleaned-text)
+            (term-send-string (get-buffer-process chosen-buffer) "\n"))
+          (amp--display-and-focus-buffer chosen-buffer))
+         ((eq chosen-buffer 'create-new)
+          ;; User chose to create new process, start one for current project
           (amp--start-terminal)
           (setq buffer (get-buffer current-buffer-name))
           (when buffer
             ;; Wait for process to be ready before sending text
             (run-with-timer 1.0 nil
                            (lambda ()
-                             (when (and buffer (term-check-proc buffer))
-                               (with-current-buffer buffer
-                                 (term-send-string (get-buffer-process buffer) text)
-                                 (term-send-string (get-buffer-process buffer) "\n"))
-                               (amp--display-and-focus-buffer buffer))))
-            (amp--display-and-focus-buffer buffer)))))))
+                           (when (and buffer (term-check-proc buffer))
+                           (with-current-buffer buffer
+                           (term-send-string (get-buffer-process buffer) cleaned-text)
+                           (term-send-string (get-buffer-process buffer) "\n"))
+                           (amp--display-and-focus-buffer buffer))))
+            (amp--display-and-focus-buffer buffer))
+         (t
+          ;; User chose not to create a process, do nothing
+          nil)))))))
 
 ;;;###autoload
 (defun amp--fix-region ()

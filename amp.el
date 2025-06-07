@@ -202,7 +202,7 @@
             (display-buffer buffer)))))))
 
 ;;;###autoload
-(defun amp--fix ()
+(defun amp--fix-region ()
   "Send selected text to amp with 'fix this: ' prefix."
   (interactive)
   (if (use-region-p)
@@ -211,12 +211,25 @@
     (message "No region selected")))
 
 ;;;###autoload
-(defun amp--improve ()
+(defun amp--improve-region ()
   "Send selected text to amp with 'improve this: ' prefix."
   (interactive)
   (if (use-region-p)
       (let ((code-text (buffer-substring-no-properties (region-beginning) (region-end))))
         (amp--send-to-process (concat "improve this: " code-text)))
+    (message "No region selected")))
+
+;;;###autoload
+(defun amp--prompt-for-region ()
+  "Send selected text to amp with custom prompt entered by user."
+  (interactive)
+  (if (use-region-p)
+      (let* ((selected-text (buffer-substring-no-properties (region-beginning) (region-end)))
+             (prompt (read-string "Enter prompt: "))
+             (full-text (if (string-empty-p prompt)
+                           selected-text
+                         (concat prompt " " selected-text))))
+        (amp--send-to-process full-text))
     (message "No region selected")))
 
 ;;;###autoload

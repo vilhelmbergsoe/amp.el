@@ -247,6 +247,14 @@
     (message "No region selected")))
 
 ;;;###autoload
+(defun amp--prompt ()
+  "Send text to the amp process."
+  (interactive)
+  (let ((text (read-string "Amp prompt: ")))
+    (unless (string-empty-p text)
+      (amp--send-to-process text))))
+
+;;;###autoload
 (defun amp--switch ()
   "Switch to an amp buffer."
   (interactive)

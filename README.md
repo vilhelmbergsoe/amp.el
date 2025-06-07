@@ -22,9 +22,13 @@ amp.el excels at managing multiple projects simultaneously:
 
 ### Quick Actions
 
-- `amp--fix`: Send selected text with "fix this: " prefix
-- `amp--improve`: Send selected text with "improve this: " prefix
+- `amp--fix-region`: Send selected text with "fix this: " prefix
+- `amp--improve-region`: Send selected text with "improve this: " prefix
+- `amp--explain-region`: Send selected text with "explain this: " prefix
+- `amp--prompt-for-region`: Send selected text with custom prompt
+- `amp--prompt`: Send custom text to amp
 - `amp--switch`: Switch between existing amp buffers
+- `amp--kill`: Kill selected amp processes
 
 ## Installation
 
@@ -61,8 +65,15 @@ Add this to your Emacs configuration:
 ### Code Actions
 
 1. Select code in any buffer
-2. Run `M-x amp--fix` to send code with "fix this: " prefix
-3. Run `M-x amp--improve` to send code with "improve this: " prefix
+2. Run `M-x amp--fix-region` to send code with "fix this: " prefix
+3. Run `M-x amp--improve-region` to send code with "improve this: " prefix
+4. Run `M-x amp--explain-region` to send code with "explain this: " prefix
+5. Run `M-x amp--prompt-for-region` to send code with custom prompt
+
+### Additional Commands
+
+- `M-x amp--prompt`: Send custom text directly to amp (no region required)
+- `M-x amp--kill`: Kill selected amp processes
 
 ### Switching Between Sessions
 
@@ -74,9 +85,13 @@ Add these to your configuration for quick access:
 
 ```elisp
 (global-set-key (kbd "C-c a a") 'amp)
-(global-set-key (kbd "C-c a f") 'amp--fix)
-(global-set-key (kbd "C-c a i") 'amp--improve)
+(global-set-key (kbd "C-c a f") 'amp--fix-region)
+(global-set-key (kbd "C-c a i") 'amp--improve-region)
+(global-set-key (kbd "C-c a e") 'amp--explain-region)
+(global-set-key (kbd "C-c a p") 'amp--prompt-for-region)
+(global-set-key (kbd "C-c a m") 'amp--prompt)
 (global-set-key (kbd "C-c a s") 'amp--switch)
+(global-set-key (kbd "C-c a k") 'amp--kill)
 ```
 
 ## Requirements

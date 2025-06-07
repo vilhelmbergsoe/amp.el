@@ -35,11 +35,11 @@
 
 (defun amp--watch-file (file)
   "Add a file watcher for FILE to auto-revert when modified."
-  (when (and (file-exists-p file) 
+  (when (and (file-exists-p file)
              (not (assoc file amp--file-watchers)))
     (condition-case err
-        (let ((watcher (file-notify-add-watch 
-                       file '(change) 
+        (let ((watcher (file-notify-add-watch
+                       file '(change)
                        (lambda (event)
                          (when (eq (nth 1 event) 'changed)
                            (amp--revert-buffer-if-exists (nth 2 event)))))))
@@ -66,7 +66,7 @@
        ;; "Creating file: path/to/file"
        ((string-match "Creating file: \\(.+\\)" line)
         (amp--watch-file (match-string 1 line)))
-       ;; "Editing file: path/to/file" 
+       ;; "Editing file: path/to/file"
        ((string-match "Editing file: \\(.+\\)" line)
         (amp--watch-file (match-string 1 line)))
        ;; "Modified: path/to/file"
@@ -169,6 +169,19 @@
                                      nil t)))
         (get-buffer choice))))))
 
+(defun amp--display-and-focus-buffer (buffer)
+  "Display and focus BUFFER, positioning cursor at end."
+  (let ((window (get-buffer-window buffer)))
+    (if window
+        ;; Buffer already displayed, just select the window
+        (select-window window)
+      ;; Buffer not displayed, split window and show it on the left
+      (split-window-right)
+      (switch-to-buffer buffer))
+    ;; Move cursor to end of buffer
+    (with-current-buffer buffer
+      (goto-char (point-max)))))
+
 (defun amp--send-to-process (text)
   "Send TEXT to the amp process, starting it if necessary."
   (let* ((current-buffer-name (amp--get-buffer-name))
@@ -177,17 +190,17 @@
     (if (and buffer (term-check-proc buffer))
         (progn
           (with-current-buffer buffer
-            (term-send-string (get-buffer-process buffer) text)
-            (term-send-string (get-buffer-process buffer) "\r"))
-          (display-buffer buffer))
+          (term-send-string (get-buffer-process buffer) text)
+          (term-send-string (get-buffer-process buffer) "\n"))
+          (amp--display-and-focus-buffer buffer))
       ;; Otherwise, try to find any amp buffer or ask user to choose
       (let ((chosen-buffer (amp--choose-amp-buffer)))
         (if chosen-buffer
             (progn
               (with-current-buffer chosen-buffer
-                (term-send-string (get-buffer-process chosen-buffer) text)
-                (term-send-string (get-buffer-process chosen-buffer) "\r"))
-              (display-buffer chosen-buffer))
+              (term-send-string (get-buffer-process chosen-buffer) text)
+              (term-send-string (get-buffer-process chosen-buffer) "\n"))
+              (amp--display-and-focus-buffer chosen-buffer))
           ;; No running amp processes, start one for current project
           (amp--start-terminal)
           (setq buffer (get-buffer current-buffer-name))
@@ -198,8 +211,9 @@
                              (when (and buffer (term-check-proc buffer))
                                (with-current-buffer buffer
                                  (term-send-string (get-buffer-process buffer) text)
-                                 (term-send-string (get-buffer-process buffer) "\r")))))
-            (display-buffer buffer)))))))
+                                 (term-send-string (get-buffer-process buffer) "\n"))
+                               (amp--display-and-focus-buffer buffer))))
+            (amp--display-and-focus-buffer buffer)))))))
 
 ;;;###autoload
 (defun amp--fix-region ()

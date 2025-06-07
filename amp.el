@@ -234,6 +234,15 @@
     (message "No region selected")))
 
 ;;;###autoload
+(defun amp--explain-region ()
+  "Send selected text to amp with 'explain this: ' prefix."
+  (interactive)
+  (if (use-region-p)
+      (let ((code-text (buffer-substring-no-properties (region-beginning) (region-end))))
+        (amp--send-to-process (concat "explain this: " code-text)))
+    (message "No region selected")))
+
+;;;###autoload
 (defun amp--prompt-for-region ()
   "Send selected text to amp with custom prompt entered by user."
   (interactive)

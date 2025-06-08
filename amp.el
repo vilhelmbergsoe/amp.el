@@ -83,17 +83,29 @@
   (amp--parse-output-for-files output)
   output)
 
+(defun amp--get-project-root ()
+  "Get the current project root directory."
+  (cond
+   ;; Try project.el first
+   ((and (featurep 'project) (project-current))
+    (project-root (project-current)))
+   ;; Try projectile
+   ((and (featurep 'projectile) (projectile-project-p))
+    (projectile-project-root))
+   ;; Fall back to current directory
+   (t default-directory)))
+
 (defun amp--get-project-name ()
   "Get the current project name."
   (cond
-   ;; Try projectile first
-   ((and (featurep 'projectile) (projectile-project-p))
-    (projectile-project-name))
-   ;; Try project.el
+   ;; Try project.el first
    ((and (featurep 'project) (project-current))
     (if (fboundp 'project-name)
         (project-name (project-current))
       (file-name-nondirectory (directory-file-name (project-root (project-current))))))
+   ;; Try projectile
+   ((and (featurep 'projectile) (projectile-project-p))
+    (projectile-project-name))
    ;; Fall back to directory name
    (t (file-name-nondirectory (directory-file-name default-directory)))))
 
@@ -125,21 +137,26 @@
 (defun amp--start-terminal ()
   "Start amp in a terminal buffer."
   (let* ((buffer-name (amp--get-buffer-name))
-         (buffer (get-buffer buffer-name)))
+         (buffer (get-buffer buffer-name))
+         (project-root (amp--get-project-root)))
     (if (and buffer (term-check-proc buffer))
         (display-buffer buffer)
       (progn
         (when buffer (kill-buffer buffer))
-        (setq buffer (make-term (substring buffer-name 1 -1) "amp"))
-        (with-current-buffer buffer
-          (rename-buffer buffer-name)
-          ;; Set environment to improve terminal compatibility
-          (setenv "TERM" "dumb")
-          ;; Disable progress bars and fancy output
-          (setenv "NO_COLOR" "1")
-          (setenv "CI" "1")
-          ;; Add output filter to watch for file modifications
-          (add-hook 'comint-output-filter-functions 'amp--output-filter nil t))
+        ;; Set default-directory to project root before creating terminal
+        (let ((default-directory project-root))
+          (setq buffer (make-term (substring buffer-name 1 -1) "amp"))
+          (with-current-buffer buffer
+            (rename-buffer buffer-name)
+            ;; Ensure buffer's default-directory is set to project root
+            (setq default-directory project-root)
+            ;; Set environment to improve terminal compatibility
+            (setenv "TERM" "dumb")
+            ;; Disable progress bars and fancy output
+            (setenv "NO_COLOR" "1")
+            (setenv "CI" "1")
+            ;; Add output filter to watch for file modifications
+            (add-hook 'comint-output-filter-functions 'amp--output-filter nil t)))
         (set-buffer buffer)
         (term-mode)
         (term-char-mode)

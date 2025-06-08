@@ -143,6 +143,10 @@
         (display-buffer buffer)
       (progn
         (when buffer (kill-buffer buffer))
+        ;; Set environment variables before creating terminal
+        (setenv "TERM" "dumb")
+        (setenv "NO_COLOR" "1")
+        (setenv "CI" "1")
         ;; Set default-directory to project root before creating terminal
         (let ((default-directory project-root))
           (setq buffer (make-term (substring buffer-name 1 -1) "amp"))
@@ -150,11 +154,6 @@
             (rename-buffer buffer-name)
             ;; Ensure buffer's default-directory is set to project root
             (setq default-directory project-root)
-            ;; Set environment to improve terminal compatibility
-            (setenv "TERM" "dumb")
-            ;; Disable progress bars and fancy output
-            (setenv "NO_COLOR" "1")
-            (setenv "CI" "1")
             ;; Add output filter to watch for file modifications
             (add-hook 'comint-output-filter-functions 'amp--output-filter nil t)))
         (set-buffer buffer)

@@ -79,6 +79,13 @@ Add this to your Emacs configuration:
 
 Run `M-x amp--switch` to quickly jump between amp buffers from different projects or sessions.
 
+### Terminal Mode Navigation
+
+The amp buffer uses terminal char mode by default. If you need to use Emacs commands like `M-x`:
+
+- Press `C-c C-j` to switch to line mode (enables normal Emacs commands)
+- Press `C-c C-k` to switch back to char mode (direct terminal interaction)
+
 ### Key Bindings (Optional)
 
 Add these to your configuration for quick access:

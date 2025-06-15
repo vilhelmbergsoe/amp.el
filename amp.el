@@ -63,11 +63,11 @@
     (dolist (line lines)
       ;; Look for common patterns that indicate file operations
       (cond
-       ;; "Creating file: path/to/file"
-       ((string-match "Creating file: \\(.+\\)" line)
+       ;; "Create path/to/file"
+       ((string-match "Create \\(.+\\)" line)
         (amp--watch-file (match-string 1 line)))
-       ;; "Editing file: path/to/file"
-       ((string-match "Editing file: \\(.+\\)" line)
+       ;; "Edit path/to/file"
+       ((string-match "Edit \\(.+\\)" line)
         (amp--watch-file (match-string 1 line)))
        ;; "Modified: path/to/file"
        ((string-match "Modified: \\(.+\\)" line)

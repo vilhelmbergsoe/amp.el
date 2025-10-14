@@ -4,18 +4,18 @@
 
 ;; Author: Shane Kennedy
 ;; Version: 1.0.0
-;; Package-Requires: ((emacs "28.1"))
+;; Package-Requires: ((emacs "28.1") (vterm "0.0.1"))
 ;; Keywords: tools, development, ai
 
 ;;; Commentary:
 
 ;; This package provides an interactive command to run the Amp CLI
-;; in a terminal buffer. If the amp command is not found, it will
+;; in a vterm buffer. If the amp command is not found, it will
 ;; attempt to install it via npm.
 
 ;;; Code:
 
-(require 'term)
+(require 'vterm)
 (require 'cl-lib)
 (require 'filenotify)
 
@@ -135,30 +135,23 @@
         proc))))
 
 (defun amp--start-terminal ()
-  "Start amp in a terminal buffer."
+  "Start amp in a vterm buffer."
   (let* ((buffer-name (amp--get-buffer-name))
          (buffer (get-buffer buffer-name))
          (project-root (amp--get-project-root)))
-    (if (and buffer (term-check-proc buffer))
+    (if (and buffer (get-buffer-process buffer))
         (display-buffer buffer)
       (progn
         (when buffer (kill-buffer buffer))
-        ;; Set environment variables before creating terminal
-        (setenv "TERM" "dumb")
-        (setenv "NO_COLOR" "1")
-        (setenv "CI" "1")
-        ;; Set default-directory to project root before creating terminal
-        (let ((default-directory project-root))
-          (setq buffer (make-term (substring buffer-name 1 -1) "amp"))
+        ;; Set default-directory to project root before creating vterm
+        (let ((default-directory project-root)
+              (vterm-shell "amp"))
+          (setq buffer (vterm buffer-name))
           (with-current-buffer buffer
-            (rename-buffer buffer-name)
             ;; Ensure buffer's default-directory is set to project root
             (setq default-directory project-root)
-            ;; Add output filter to watch for file modifications
-            (add-hook 'comint-output-filter-functions 'amp--output-filter nil t)))
-        (set-buffer buffer)
-        (term-mode)
-        (term-char-mode)
+            ;; Enable auto-kill on exit for this buffer
+            (setq-local vterm-kill-buffer-on-exit t)))
         (display-buffer buffer)))
     buffer))
 
@@ -167,7 +160,7 @@
   (cl-remove-if-not
    (lambda (buf)
      (and (string-match "^\\*amp-.*\\*$" (buffer-name buf))
-          (with-current-buffer buf (term-check-proc buf))))
+          (with-current-buffer buf (get-buffer-process buf))))
    (buffer-list)))
 
 (defun amp--choose-amp-buffer ()
@@ -204,19 +197,19 @@
          (current-buffer-name (amp--get-buffer-name))
          (buffer (get-buffer current-buffer-name)))
     ;; If current project has an amp buffer, use it
-    (if (and buffer (term-check-proc buffer))
+    (if (and buffer (get-buffer-process buffer))
         (progn
           (with-current-buffer buffer
-          (term-send-string (get-buffer-process buffer) cleaned-text)
-          (term-send-string (get-buffer-process buffer) "\n"))
+          (vterm-send-string cleaned-text)
+          (vterm-send-return))
           (amp--display-and-focus-buffer buffer))
       ;; Otherwise, try to find any amp buffer or ask user to choose
       (let ((chosen-buffer (amp--choose-amp-buffer)))
         (cond
          ((bufferp chosen-buffer)
           (with-current-buffer chosen-buffer
-            (term-send-string (get-buffer-process chosen-buffer) cleaned-text)
-            (term-send-string (get-buffer-process chosen-buffer) "\n"))
+            (vterm-send-string cleaned-text)
+            (vterm-send-return))
           (amp--display-and-focus-buffer chosen-buffer))
          ((eq chosen-buffer 'create-new)
           ;; User chose to create new process, start one for current project
@@ -226,10 +219,10 @@
             ;; Wait for process to be ready before sending text
             (run-with-timer 1.0 nil
                            (lambda ()
-                           (when (and buffer (term-check-proc buffer))
+                           (when (and buffer (get-buffer-process buffer))
                            (with-current-buffer buffer
-                           (term-send-string (get-buffer-process buffer) cleaned-text)
-                           (term-send-string (get-buffer-process buffer) "\n"))
+                           (vterm-send-string cleaned-text)
+                           (vterm-send-return))
                            (amp--display-and-focus-buffer buffer))))
             (amp--display-and-focus-buffer buffer))
          (t

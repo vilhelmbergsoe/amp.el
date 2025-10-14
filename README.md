@@ -4,7 +4,7 @@ An Emacs interface for the [Amp CLI](https://github.com/sourcegraph/amp) - Sourc
 
 ## Features
 
-- **Interactive Terminal Interface**: Launch Amp CLI in a dedicated terminal buffer within Emacs
+- **Interactive Terminal Interface**: Launch Amp CLI in a dedicated vterm buffer within Emacs
 - **Multi-Project Support**: Automatically manages separate Amp sessions for different projects
 - **Intelligent Project Detection**: Works with both `projectile` and `project.el` for project identification
 - **Quick Code Actions**: Send selected code to Amp with predefined prompts
@@ -60,7 +60,7 @@ Add this to your Emacs configuration:
 
 1. Run `M-x amp` to start Amp in the current project
 2. If Amp CLI isn't installed, it will offer to install it via npm
-3. The Amp CLI will open in a terminal buffer named `*amp-{project-name}*`
+3. The Amp CLI will open in a vterm buffer named `*amp-{project-name}*`
 
 ### Code Actions
 
@@ -79,12 +79,12 @@ Add this to your Emacs configuration:
 
 Run `M-x amp--switch` to quickly jump between amp buffers from different projects or sessions.
 
-### Terminal Mode Navigation
+### Vterm Navigation
 
-The amp buffer uses terminal char mode by default. If you need to use Emacs commands like `M-x`:
+The amp buffer uses vterm. Use standard vterm key bindings:
 
-- Press `C-c C-j` to switch to line mode (enables normal Emacs commands)
-- Press `C-c C-k` to switch back to char mode (direct terminal interaction)
+- `C-c C-t` to toggle between copy mode and vterm mode
+- In copy mode, you can use normal Emacs navigation and commands
 
 ### Key Bindings (Optional)
 
@@ -104,6 +104,7 @@ Add these to your configuration for quick access:
 ## Requirements
 
 - Emacs 28.1 or later
+- [vterm](https://github.com/akermu/emacs-libvterm) - Emacs libvterm integration
 - Node.js and npm (for Amp CLI installation)
 - Optional: `projectile` or `project.el` for enhanced project detection
 

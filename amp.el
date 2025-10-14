@@ -148,6 +148,8 @@
               (vterm-shell "amp"))
           (setq buffer (vterm buffer-name))
           (with-current-buffer buffer
+	    (setq-local display-line-numbers nil)
+
             ;; Ensure buffer's default-directory is set to project root
             (setq default-directory project-root)
             ;; Enable auto-kill on exit for this buffer

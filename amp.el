@@ -134,6 +134,26 @@
                                  (display-buffer install-buffer))))
         proc))))
 
+(defun amp--setup-keybindings ()
+  "Setup keybindings for improved scrolling and pasting in amp vterm buffer."
+  ;; Scrolling: map common keys to Page Up/Down
+  (define-key vterm-mode-map (kbd "C-u") (lambda () (interactive) (vterm-send-key "<prior>")))
+  (define-key vterm-mode-map (kbd "C-d") (lambda () (interactive) (vterm-send-key "<next>")))
+  (define-key vterm-mode-map (kbd "M-v") (lambda () (interactive) (vterm-send-key "<prior>")))
+  (define-key vterm-mode-map (kbd "C-v") (lambda () (interactive) (vterm-send-key "<next>")))
+  
+  ;; Pasting: use vterm-yank for proper clipboard handling
+  (define-key vterm-mode-map (kbd "C-y") 'vterm-yank)
+  
+  ;; Evil mode keybindings if available
+  (when (featurep 'evil)
+    (evil-local-set-key 'insert (kbd "C-u") (lambda () (interactive) (vterm-send-key "<prior>")))
+    (evil-local-set-key 'insert (kbd "C-d") (lambda () (interactive) (vterm-send-key "<next>")))
+    (evil-local-set-key 'insert (kbd "C-y") 'vterm-yank)
+    (evil-local-set-key 'insert (kbd "p") 'vterm-yank)
+    (evil-local-set-key 'normal (kbd "p") 'vterm-yank)
+    (evil-local-set-key 'normal (kbd "P") 'vterm-yank)))
+
 (defun amp--start-terminal ()
   "Start amp in a vterm buffer."
   (let* ((buffer-name (amp--get-buffer-name))
@@ -153,7 +173,9 @@
             ;; Ensure buffer's default-directory is set to project root
             (setq default-directory project-root)
             ;; Enable auto-kill on exit for this buffer
-            (setq-local vterm-kill-buffer-on-exit t)))
+            (setq-local vterm-kill-buffer-on-exit t)
+            ;; Setup improved keybindings
+            (amp--setup-keybindings)))
         (display-buffer buffer)))
     buffer))
 

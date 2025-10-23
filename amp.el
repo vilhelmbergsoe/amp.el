@@ -10,8 +10,7 @@
 ;;; Commentary:
 
 ;; This package provides an interactive command to run the Amp CLI
-;; in a vterm buffer. If the amp command is not found, it will
-;; attempt to install it via npm.
+;; in a vterm buffer.
 
 ;;; Code:
 
@@ -116,23 +115,6 @@
 (defun amp--check-installation ()
   "Check if amp CLI is installed."
   (executable-find "amp"))
-
-(defun amp--install-amp ()
-  "Install amp CLI via npm."
-  (message "Installing amp CLI via npm...")
-  (let ((install-buffer (get-buffer-create "*amp-install*")))
-    (with-current-buffer install-buffer
-      (erase-buffer)
-      (let ((proc (start-process "amp-install" install-buffer "npm" "install" "-g" "@sourcegraph/amp")))
-        (set-process-sentinel proc
-                             (lambda (process event)
-                               (when (string-match "finished" event)
-                                 (message "Amp CLI installation completed")
-                                 (kill-buffer install-buffer))
-                               (when (string-match "exited abnormally" event)
-                                 (message "Failed to install amp CLI. Check *amp-install* buffer for details")
-                                 (display-buffer install-buffer))))
-        proc))))
 
 (defun amp--setup-keybindings ()
   "Setup keybindings for improved scrolling and pasting in amp vterm buffer."
@@ -355,16 +337,11 @@
 
 ;;;###autoload
 (defun amp ()
-  "Start the amp CLI in the current project as a terminal buffer.
-If amp CLI is not installed, attempt to install it via npm."
+  "Start the amp CLI in the current project as a terminal buffer."
   (interactive)
   (if (amp--check-installation)
       (amp--start-terminal)
-    (if (yes-or-no-p "Amp CLI not found. Install via npm? ")
-        (progn
-          (amp--install-amp)
-          (message "Installing amp CLI... Run 'amp' again after installation completes."))
-      (message "Amp CLI installation cancelled"))))
+    (message "amp executable not found in your path. Please ensure it is installed and available in your exec-path.")))
 
 (provide 'amp)
 

@@ -23,6 +23,5 @@
 
 ## Project Structure
 - Main functionality in `amp.el` (single file package)
-- Uses `term.el` for terminal interaction
-- Auto-installs amp CLI via npm if missing
+- Uses `vterm` for terminal interaction
 - Supports projectile and project.el for project detection

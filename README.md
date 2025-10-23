@@ -9,7 +9,6 @@ An Emacs interface for the [Amp CLI](https://github.com/sourcegraph/amp) - Sourc
 - **Intelligent Project Detection**: Works with both `projectile` and `project.el` for project identification
 - **Quick Code Actions**: Send selected code to Amp with predefined prompts
 - **Smart Process Management**: Automatically handles multiple Amp processes and lets you choose between them
-- **Auto-Installation**: Automatically installs Amp CLI via npm if not found
 
 ### Multi-Project Capabilities
 
@@ -59,8 +58,7 @@ Add this to your Emacs configuration:
 ### Basic Usage
 
 1. Run `M-x amp` to start Amp in the current project
-2. If Amp CLI isn't installed, it will offer to install it via npm
-3. The Amp CLI will open in a vterm buffer named `*amp-{project-name}*`
+2. The Amp CLI will open in a vterm buffer named `*amp-{project-name}*`
 
 ### Code Actions
 
@@ -105,7 +103,6 @@ Add these to your configuration for quick access:
 
 - Emacs 28.1 or later
 - [vterm](https://github.com/akermu/emacs-libvterm) - Emacs libvterm integration
-- Node.js and npm (for Amp CLI installation)
 - Optional: `projectile` or `project.el` for enhanced project detection
 
 ## License

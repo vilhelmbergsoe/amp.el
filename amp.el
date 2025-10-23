@@ -141,6 +141,7 @@
   (define-key vterm-mode-map (kbd "C-d") (lambda () (interactive) (vterm-send-key "<next>")))
   (define-key vterm-mode-map (kbd "M-v") (lambda () (interactive) (vterm-send-key "<prior>")))
   (define-key vterm-mode-map (kbd "C-v") (lambda () (interactive) (vterm-send-key "<next>")))
+  (define-key vterm-mode-map (kbd "C-g") (lambda () (interactive) (vterm-send-escape)))
   
   ;; Pasting: use vterm-yank for proper clipboard handling
   (define-key vterm-mode-map (kbd "C-y") 'vterm-yank)

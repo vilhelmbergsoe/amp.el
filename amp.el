@@ -133,6 +133,8 @@
     (evil-local-set-key 'insert (kbd "C-u") (lambda () (interactive) (vterm-send-key "<prior>")))
     (evil-local-set-key 'insert (kbd "C-d") (lambda () (interactive) (vterm-send-key "<next>")))
     (evil-local-set-key 'insert (kbd "C-y") 'vterm-yank)
+    (evil-local-set-key 'normal (kbd "C-u") (lambda () (interactive) (vterm-send-key "<prior>")))
+    (evil-local-set-key 'normal (kbd "C-d") (lambda () (interactive) (vterm-send-key "<next>")))
     (evil-local-set-key 'normal (kbd "p") 'vterm-yank)
     (evil-local-set-key 'normal (kbd "P") 'vterm-yank)))
 

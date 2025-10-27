@@ -4,6 +4,7 @@
 - No build/test/lint commands (single-file Emacs Lisp package)
 - Test syntax: `emacs -batch -f check-parens amp.el`
 - Load test: `emacs -batch -l amp.el`
+- Worktree integration: `amp-worktree` to create git worktree and start amp in it, with automatic discard prompts on buffer kill
 
 ## Code Style
 - **Language**: Emacs Lisp
@@ -17,7 +18,7 @@
 - **Lexical binding**: Always use `;;; -*- lexical-binding: t; -*-`
 - **Requires**: Place all requires at top of file after header
 - **Error handling**: Use `condition-case` for error handling
-- **Buffer names**: Format as `*amp-{project-name}*`
+- **Buffer names**: Format as `*amp-{project-name}*` or `*amp-worktree-{project-name}--{branch}*` for worktrees
 - **Interactive functions**: Mark with `;;;###autoload` for public commands
 - **Package structure**: Single file, provide statement at end
 

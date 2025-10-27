@@ -116,6 +116,83 @@
   "Check if amp CLI is installed."
   (executable-find "amp"))
 
+(defun amp--git-worktree-add (branch)
+  "Create a new git worktree for BRANCH."
+  (let ((project-root (amp--get-project-root)))
+    (if (and (file-exists-p (expand-file-name ".git" project-root))
+             (executable-find "git"))
+        (let ((worktree-path (expand-file-name branch project-root)))
+          (if (file-exists-p worktree-path)
+              (error "Worktree path already exists: %s" worktree-path)
+            (let ((exit-code (call-process "git" nil nil nil
+                                          "worktree" "add" branch)))
+              (if (= exit-code 0)
+                  worktree-path
+                (error "Failed to create git worktree for branch %s" branch)))))
+      (error "Not in a git repository or git not found"))))
+
+(defun amp--start-terminal-in-dir (directory &optional buffer-name)
+  "Start amp in a vterm buffer in DIRECTORY."
+  (let* ((project-name (amp--get-project-name))
+         (buffer-name (or buffer-name (format "*amp-%s*" project-name)))
+         (is-worktree (string-match "^\\*amp-worktree-" buffer-name))
+         (buffer (get-buffer buffer-name)))
+    (if (and buffer (get-buffer-process buffer))
+        (display-buffer buffer)
+      (progn
+        (when buffer (kill-buffer buffer))
+        ;; Set default-directory to the specified directory
+        (let ((default-directory directory)
+              (vterm-shell "amp"))
+          (setq buffer (vterm buffer-name))
+          (with-current-buffer buffer
+            (setq-local display-line-numbers nil)
+            ;; Ensure buffer's default-directory is set
+            (setq default-directory directory)
+            ;; Enable auto-kill on exit for non-worktree buffers
+            (unless is-worktree
+              (setq-local vterm-kill-buffer-on-exit t))
+            ;; For worktree buffers, add hooks for prompting and discarding
+            (when is-worktree
+              (add-hook 'kill-buffer-hook #'amp--offer-discard-worktree nil t)
+              (add-hook 'vterm-exit-functions (lambda (buffer _exit-status) (with-current-buffer buffer (amp--offer-discard-worktree))) nil t))
+            ;; Setup improved keybindings
+            (amp--setup-keybindings)))
+        (display-buffer buffer)))
+    buffer))
+
+(defun amp--parse-worktree-buffer (buffer-name)
+  "Parse BUFFER-NAME to extract project and branch if it's a worktree buffer.
+Returns (project . branch) or nil if not a worktree buffer."
+  (when (string-match "^\\*amp-worktree-\\(.+\\)--\\(.+\\)\\*$" buffer-name)
+    (cons (match-string 1 buffer-name) (match-string 2 buffer-name))))
+
+(defun amp--discard-worktree (branch &optional project-root)
+  "Discard the worktree for BRANCH: reset changes, clean, and remove worktree."
+  (let ((project-root (or project-root (amp--get-project-root))))
+    (when (and (file-exists-p (expand-file-name ".git" project-root))
+               (executable-find "git"))
+      (let ((worktree-path (expand-file-name branch project-root)))
+        (when (file-exists-p worktree-path)
+          ;; Reset any changes
+          (call-process "git" nil nil nil "-C" worktree-path "reset" "--hard")
+          (call-process "git" nil nil nil "-C" worktree-path "clean" "-fd")
+          ;; Remove worktree
+          (call-process "git" nil nil nil "worktree" "remove" branch)
+          t)))))
+
+(defun amp--offer-discard-worktree ()
+  "Offer to discard worktree for the current buffer."
+  (let ((parsed (amp--parse-worktree-buffer (buffer-name (current-buffer)))))
+    (when parsed
+      (let* ((branch (cdr parsed))
+             (main-repo (file-name-directory (directory-file-name default-directory)))
+             (worktree-path (expand-file-name branch main-repo)))
+        (when (file-exists-p worktree-path)
+          (when (yes-or-no-p (format "Discard worktree for branch '%s'? This will reset changes and remove the worktree." branch))
+            (amp--discard-worktree branch main-repo)
+            (kill-buffer (current-buffer))))))))
+
 (defun amp--setup-keybindings ()
   "Setup keybindings for improved scrolling and pasting in amp vterm buffer."
   ;; Scrolling: map common keys to Page Up/Down
@@ -139,29 +216,8 @@
     (evil-local-set-key 'normal (kbd "P") 'vterm-yank)))
 
 (defun amp--start-terminal ()
-  "Start amp in a vterm buffer."
-  (let* ((buffer-name (amp--get-buffer-name))
-         (buffer (get-buffer buffer-name))
-         (project-root (amp--get-project-root)))
-    (if (and buffer (get-buffer-process buffer))
-        (display-buffer buffer)
-      (progn
-        (when buffer (kill-buffer buffer))
-        ;; Set default-directory to project root before creating vterm
-        (let ((default-directory project-root)
-              (vterm-shell "amp"))
-          (setq buffer (vterm buffer-name))
-          (with-current-buffer buffer
-	    (setq-local display-line-numbers nil)
-
-            ;; Ensure buffer's default-directory is set to project root
-            (setq default-directory project-root)
-            ;; Enable auto-kill on exit for this buffer
-            (setq-local vterm-kill-buffer-on-exit t)
-            ;; Setup improved keybindings
-            (amp--setup-keybindings)))
-        (display-buffer buffer)))
-    buffer))
+"Start amp in a vterm buffer in the project root."
+(amp--start-terminal-in-dir (amp--get-project-root) (amp--get-buffer-name)))
 
 (defun amp--find-amp-buffers ()
   "Find all amp buffers currently running."
@@ -342,6 +398,18 @@
   (interactive)
   (if (amp--check-installation)
       (amp--start-terminal)
+    (message "amp executable not found in your path. Please ensure it is installed and available in your exec-path.")))
+
+;;;###autoload
+(defun amp-worktree (branch)
+  "Create a git worktree for BRANCH and start amp in it."
+  (interactive "sBranch name: ")
+  (if (amp--check-installation)
+      (condition-case err
+          (let ((worktree-path (amp--git-worktree-add branch)))
+            (amp--start-terminal-in-dir worktree-path (format "*amp-worktree-%s--%s*" (amp--get-project-name) branch))
+            (message "Created worktree and started amp for branch %s" branch))
+        (error (message "Failed to create worktree: %s" (error-message-string err))))
     (message "amp executable not found in your path. Please ensure it is installed and available in your exec-path.")))
 
 (provide 'amp)
